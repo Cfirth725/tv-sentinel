@@ -40,3 +40,10 @@ type TvIngestPayload struct {
 type TvImportEnvelope struct {
 	Shows []TvIngestPayload `json:"shows"`
 }
+
+// User captures the unified system identity profile mapping shared across the suite.
+type User struct {
+	ID        int64     `json:"id"`
+	Username  string    `json:"username"`
+	CreatedAt time.Time `json:"created_at"`
+}
