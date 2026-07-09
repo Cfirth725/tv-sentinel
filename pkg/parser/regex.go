@@ -1,3 +1,5 @@
+// Package parser handles raw file parsing engines, textual normalization algorithms,
+// and sequence extraction patterns for processing media ingestion entries.
 package parser
 
 import (
@@ -6,6 +8,7 @@ import (
 	"strings"
 )
 
+// NormalizedTvMedia encapsulates the structured output values extracted from a raw file string.
 type NormalizedTvMedia struct {
 	BaseTitle     string
 	SeasonNumber  int
@@ -26,6 +29,7 @@ var (
 	junkRegex = regexp.MustCompile(`(?i)\b(?:\d{3,4}p|bluray|hdtv|x26[45]|web-dl|amzn|nf)\b.*`)
 )
 
+// NormalizeTvEntry parses a raw incoming media title string into structured seasonal metrics.
 func NormalizeTvEntry(rawTitle string) NormalizedTvMedia {
 	cleaned := rawTitle
 	season := 1

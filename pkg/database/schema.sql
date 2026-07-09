@@ -16,15 +16,15 @@ CREATE TABLE IF NOT EXISTS users (
 -- --------------------------------------------------------------------
 -- 2. Normalized TV Catalog (Autonomous Cache Layer)
 -- Acts as a read-through localized lookup layer to shield TMDB API quotas.
--- Utilizes explicit structural checks to enforce reliable metadata profiles.
+-- Flexible string definitions accommodate crowdsourced upstream metadata variations.
 -- --------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS tv_catalog (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    external_id TEXT NOT NULL UNIQUE,       -- TMDB serial string identifier
+    external_id TEXT NOT NULL UNIQUE,        -- TMDB serial string identifier
     cache_key TEXT NOT NULL UNIQUE,          -- Normalized lower-case base search key
     title_display TEXT NOT NULL,             -- Official presentation string title
-    status TEXT CHECK(status IN ('Returning Series', 'Ended', 'Canceled', 'Pilot', 'In Production', 'Planned')),
-    type TEXT CHECK(type IN ('Scripted', 'Reality', 'Documentary', 'Miniseries', 'News', 'Talk', 'Video')),
+    status TEXT,                             -- e.g., 'Returning Series', 'Ended', 'Post Production'
+    type TEXT,                               -- e.g., 'Scripted', 'Reality', 'Miniseries'
     total_seasons_count INTEGER DEFAULT 1,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );

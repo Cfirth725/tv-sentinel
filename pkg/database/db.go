@@ -1,4 +1,4 @@
-// Package database manages persistent SQLite transaction handles, schemas,
+// Package database manages persistent SQLite transaction handles, configurations,
 // and domain-specific data access objects across the tracking suite.
 package database
 
@@ -11,7 +11,7 @@ import (
 	"os"
 
 	"github.com/Cfirth725/tv-sentinel/pkg/models"
-	_ "github.com/mattn/go-sqlite3" // Enforce physical C-binding registration
+	_ "github.com/mattn/go-sqlite3"
 )
 
 // Config holds the environment configuration parameters parsed from disk.
@@ -40,43 +40,67 @@ func LoadConfig(path string) (*Config, error) {
 // InitDatabase opens a persistent connection handle to the target SQLite file,
 // forces Write-Ahead Logging concurrency parameters, and executes table scaffolding.
 func InitDatabase(dbPath string, schemaPath string) (*sql.DB, error) {
-	slog.Info("[INIT] Initializing persistent storage subsystem...", "target_path", dbPath)
+	slog.Info("[INIT] Initializing persistent storage subsystem...",
+		"subsystem", "database",
+		"target_path", dbPath,
+	)
 
 	// Open the SQLite file pointer with optimization flags tuned for local labs
 	db, err := sql.Open("sqlite3", dbPath+"?_journal_mode=WAL&_sync=NORMAL&_foreign_keys=on")
 	if err != nil {
+		slog.Error("[ERROR] Failed to establish physical database transport layer pointer",
+			"subsystem", "database",
+			"error", err.Error(),
+		)
 		return nil, fmt.Errorf("failed to open persistent database instance: %w", err)
 	}
 
 	// Verify the connection pool handle is active before running queries
 	if err := db.Ping(); err != nil {
+		slog.Error("[ERROR] Persistent connection verification ping failed",
+			"subsystem", "database",
+			"error", err.Error(),
+		)
 		db.Close()
 		return nil, fmt.Errorf("database ping validation failure: %w", err)
 	}
 
-	slog.Info("[INIT] Storage connection verified. Synchronizing extensions schema layout...")
+	slog.Info("[INIT] Storage connection verified, synchronizing schema extension layers",
+		"subsystem", "database",
+		"schema_path", schemaPath,
+	)
 
 	// Read and parse the local schema extension file lines
 	schemaBytes, err := os.ReadFile(schemaPath)
 	if err != nil {
+		slog.Error("[ERROR] Failed to read schema file map from persistent disk storage",
+			"subsystem", "database",
+			"schema_path", schemaPath,
+			"error", err.Error(),
+		)
 		db.Close()
 		return nil, fmt.Errorf("failed to load schema execution instructions from target file: %w", err)
 	}
 
 	// Append tables safely using structural 'IF NOT EXISTS' gates
 	if _, err := db.Exec(string(schemaBytes)); err != nil {
+		slog.Error("[ERROR] Failed to execute relational schema synchronization scripts",
+			"subsystem", "database",
+			"error", err.Error(),
+		)
 		db.Close()
 		return nil, fmt.Errorf("failed to apply schema extension parameters to database file: %w", err)
 	}
 
-	slog.Info("[INIT] Database layout verified. Shared suite extensions active.")
+	slog.Info("[OK] Database engine layout verified, active suite tracking extensions initialized",
+		"subsystem", "database",
+	)
 	return db, nil
 }
 
 // GetUserByUsername checks the shared database identity table for an active account profile.
 // It returns a nil model pointer if the user account record does not exist.
 func GetUserByUsername(db *sql.DB, username string) (*models.User, error) {
-	// Reusable model framework placeholder structure (Assumes models.User exists)
 	var user models.User
 	query := `SELECT id, username, created_at FROM users WHERE username = ?;`
 
@@ -85,6 +109,11 @@ func GetUserByUsername(db *sql.DB, username string) (*models.User, error) {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil // Return explicit nil bounds safely if profile is missing
 		}
+		slog.Error("[ERROR] Identity catalog verification lookup query execution error",
+			"subsystem", "database",
+			"target_username", username,
+			"error", err.Error(),
+		)
 		return nil, fmt.Errorf("failed to execute username identity scan transaction: %w", err)
 	}
 
@@ -114,6 +143,11 @@ func GetTvByTitle(db *sql.DB, cleanTitle string) (*models.TvCatalog, error) {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}
+		slog.Error("[ERROR] Persistent catalog cache search transaction execution failure",
+			"subsystem", "database",
+			"search_key", cleanTitle,
+			"error", err.Error(),
+		)
 		return nil, fmt.Errorf("local catalog cache query execution failure: %w", err)
 	}
 
@@ -133,11 +167,22 @@ func InsertTvCatalog(db *sql.DB, extID, cacheKey, title, status, tvType string, 
 
 	res, err := db.Exec(query, extID, cacheKey, title, status, tvType, totalSeasons)
 	if err != nil {
+		slog.Error("[ERROR] Upstream provider metadata cache persistence operation failed",
+			"subsystem", "database",
+			"external_id", extID,
+			"cache_key", cacheKey,
+			"error", err.Error(),
+		)
 		return 0, fmt.Errorf("failed to execute catalog cache persistence operation: %w", err)
 	}
 
 	insertedID, err := res.LastInsertId()
 	if err != nil {
+		slog.Error("[ERROR] Failed to read internal catalog table sequence identifier memory blocks",
+			"subsystem", "database",
+			"external_id", extID,
+			"error", err.Error(),
+		)
 		return 0, fmt.Errorf("failed to retrieve auto-allocated internal catalog row identification: %w", err)
 	}
 
@@ -158,6 +203,12 @@ func UpsertTvWatchProgress(db *sql.DB, userID, tvID int64, season, episode, sent
 
 	_, err := db.Exec(query, userID, tvID, season, episode, sentiment)
 	if err != nil {
+		slog.Error("[ERROR] Failed to commit running progressive milestone tracking parameters",
+			"subsystem", "database",
+			"user_id", userID,
+			"tv_id", tvID,
+			"error", err.Error(),
+		)
 		return fmt.Errorf("failed to commit tracking milestone checkpoint to watch progress ledger: %w", err)
 	}
 
