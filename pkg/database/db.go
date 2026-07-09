@@ -19,6 +19,7 @@ type Config struct {
 	Port         string `json:"PORT"`
 	DatabasePath string `json:"DATABASE_PATH"`
 	WALMode      bool   `json:"SQLITE_WAL_MODE"`
+	TmdbToken    string `json:"TMDB_TOKEN"`
 }
 
 // LoadConfig opens a target JSON file and decodes its environment properties.
