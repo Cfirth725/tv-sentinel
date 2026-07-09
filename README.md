@@ -27,17 +27,56 @@ This repository serves as an integral component of **The Sentinel Suite**—a tr
 		└───────────────────────────────────┘
 ```
 
+## Concurrent Background Processing Flow & Stampede Mitigation
+```
+[Gateway Intake]
+ │  POST /api/v1/ingest (Sub-2ms validation)
+ ▼
+[Buffered Channel]
+ │  Capacity: 10,000 tasks
+ ▼
+[Worker Routine Pool]
+ │  4 Parallel Goroutines draining the channel
+ ▼
+[Step 1: Staging Log]
+ │  Commit raw entry directly to 'ingest_staging_history'
+ ▼
+[Step 2: Read-Through Cache Lookup]
+ │  Check local 'tv_catalog' table via Normalized lower-case CacheKey
+ │
+ ├───► (Cache HIT) ─────────────────────────────────────────────────┐
+ │                                                                  │
+ └───► (Cache MISS)                                                 │
+       ▼                                                            │
+ [Step 3: Double-Check Verification]                                │
+       │  Query local DB catalog one more time                      │
+       │                                                            │
+       ├───► (Stampede Mitigated: HIT) ─────────────────────────────┤
+       │                                                            │
+       └───► (True Miss: Hit Network)                               │
+             ▼                                                      │
+       [TMDB REST API v4]                                           │
+             │  Outbound query dispatch                             │
+             ▼                                                      │
+       [Cache Populate Layer]                                       │
+             │  Insert fresh metadata row                           │
+             ▼                                                      │
+ [Update Progress State Engine] ────────────────────────────────────┴─► [TV Watch Progress Ledger]
+```
+
 ## Core Philosophy & Constraints
-1. **Zero External Dependencies:** Built strictly using the Go standard library (`net/http`, `slog`, `regexp`, `database/sql`) to minimize container footprint and maximize execution velocity.
+1. **Zero External Runtime Dependencies:** Built strictly using the Go standard library (`net/http`, `slog`, `regexp`, `database/sql`, `sync/atomic`) to minimize container footprint and maximize execution velocity.
 2. **Implicit Engagement Tracking:** Eliminates explicit user rating matrices. Taste anchors and enjoyment metrics are calculated programmatically through completion depth (**Engagement Score** $\ge$ 80%).
 3. **Decoupled Data Infrastructure:** Configuration parameters point to a central, un-tracked SQLite file using Write-Ahead Logging (`WAL` mode) to allow multi-process concurrency across the suite.
+4. **Structured DevOps Telemetry:** Built with consistent, scannable log tokens (`[INIT]`, `[SECURE]`, `[IDLE]`, `[REALTIME]`, `[SERVER]`, `[OK]`, `[ERROR]`, `[SHUTDOWN]`) for clean, production-grade terminal visibility.
+5. **Graceful Pipeline Teardown:** Listens explicitly for OS lifecycle interrupts (`SIGINT`, `SIGTERM`). On capture, the API gateway locks down instantly and SQLite connection pools execute a full final checkpoint—collapsing active `-wal` and `-shm` disk fragments back down into a single consolidated database file.
 
 ---
 
 ## 🛠️ Tech Stack & Runtime
-* **Language Runtime:** Go 1.22+ (Enhanced standard routing patterns)
+* **Language Runtime:** Go 1.24+ (Native structured logging, atomic concurrency primitives, and enhanced HTTP routing)
 * **Database Engine:** SQLite 3 via `github.com/mattn/go-sqlite3`
-* **Metadata Authority:** TMDB (The Movie Database) API
+* **Metadata Authority:** TMDB (The Movie Database) API via Header-Based Bearer Token Auth
 * **Deployment Target:** Docker Multi-stage scratch container on the Milford Node
 
 ---
@@ -47,27 +86,41 @@ This repository serves as an integral component of **The Sentinel Suite**—a tr
 tv-sentinel/
 ├── cmd/
 │   └── server/
-│       └── main.go       # HTTP Router & dependency injection entry point
+│       └── main.go       # HTTP Router, telemetry initialization, & application entry point
 ├── pkg/
 │   ├── database/
-│   │   └── db.go         # SQLite connection layer & WAL configuration
+│   │   ├── db.go         # SQLite connection layer, WAL handlers, and core database DAOs
+│   │   └── schema.sql    # Relational schema extension rules & staging configurations
+│   ├── metadata/
+│   │   └── client.go     # Outbound TMDB REST client featuring authenticated bearer contexts
+│   ├── models/
+│   │   ├── tmdb.go       # Upstream REST API JSON DTO payload data shapes
+│   │   └── tv.go         # Local domain core and ingestion transaction models
 │   └── parser/
-│       └── normalizer.go # TV title scrubbing & season/episode regex engine
-├── config.json           # Local execution configuration
+│       └── regex.go      # Cascading TV title normalizer & episodic sequence extraction engine
+├── config.json           # Local execution configurations (Port, path targets, secret auth strings)
 └── README.md             # Project roadmap & technical specification
 ```
 
 ## 🗺️ Project Roadmap
-### Phase 1: Core Scaffolding & Infrastructure (In Progress)
-- [ ] Establish isolated repository workspace and module layout (`go mod init tv-sentinel`).
-- [ ] Construct standard library network health router loop on custom port `8093`.
-- [ ] Configure local environment bridging via `config.json` targeting the shared database file.
+### Phase 1: Core Scaffolding & Infrastructure (Completed)
+- [x] Establish isolated repository workspace and module layout (`go mod init tv-sentinel`).
+- [x] Construct standard library network health router loop on custom port architectures.
+- [x] Configure local environment bridging via `config.json` targeting the shared database file.
 
-### Phase 2: Metadata Matching & Parsing 
-- [ ] Author regex title normalizer to cleanly strip structural tokens (e.g., "Season 1", "UK Edition") and isolate base series names.
-- [ ] Build robust database schemas extensions if necessary or link cleanly to the unified core `media_catalog`.
-- [ ] Model core data access objects (DAOs) inside `pkg/models`.
+### Phase 2: Metadata Matching & Parsing (Completed)
+- [x] Author regex title normalizer to cleanly strip structural tokens (e.g., "SxxExx", "1x02") and isolate base series names.
+- [x] Build robust database schemas extensions omitting strict status constraints for crowd-sourced metadata resilience.
+- [x] Model core data access objects (DAOs) and wire shapes separated across cleanly mapped package structures.
+- [x] Implement outbound REST pipeline with robust 10-second thread protection timeouts and header injection profiles.
 
-### Phase 3: Ingestion Channels & Co-Viewing Intelligence
-- [ ] Build high-volume asynchronous ingestion routes utilizing buffered Go channels (`chan`) to absorb historical user data.
-- [ ] Implement the television-specific taste profile calculator using the mathematical engagement index.
+### Phase 3: Ingestion Channels & Background Orchestrator Engine (Up Next)
+- [ ] Build a high-volume, non-blocking asynchronous ingestion route utilizing a 10,000-capacity buffered channel to absorb tracking data.
+- [ ] Construct a concurrent background worker routine pool (4 workers) to process ingested payloads out-of-band using method receiver patterns.
+- [ ] Connect background workers to `parser.NormalizeTvEntry` for live title transformation out-of-band.
+- [ ] Integrate a lock-free **Double-Check Mechanism** to dynamically eliminate cache stampedes over concurrent ingestion bursts.
+- [ ] Introduce an **OS Signal Interceptor** to safely close background processes and enforce explicit SQLite WAL log file collapse during server shutdowns.
+
+### Phase 4: Taste Analytical Intelligence
+- [ ] Code the television-specific taste profile engine and calculate completion metrics based on the 80% engagement rule.
+- [ ] Expose an analytical intelligence endpoint (`GET /api/v1/analytics/taste`) to resolve user preference anchors.
