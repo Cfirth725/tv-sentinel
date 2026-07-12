@@ -59,23 +59,19 @@ CREATE TABLE IF NOT EXISTS tv_watch_progress (
 );
 
 -- --------------------------------------------------------------------
--- 5. High-Volume Ingestion Staging Table (Shared Suite Sink)
--- Included here via IF NOT EXISTS to allow multi-process stream drops.
+-- 5. High-Volume Ingestion Staging Table (Isolated TV Sink)
+-- Provides a dedicated staging sandbox to prevent cross-service lock contention.
 -- Relaxes upstream relational constraints to maximize non-blocking input rates.
 -- --------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS ingest_staging_history (
+CREATE TABLE IF NOT EXISTS tv_ingest_staging_history (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT NOT NULL,
-    series_id TEXT NOT NULL,
     series_title TEXT NOT NULL,
     season_number INTEGER NOT NULL,
-    episode_number REAL NOT NULL,
-    episode_title TEXT,
-    episode_id TEXT,
-    watched_at DATETIME NOT NULL,
-    fully_watched BOOLEAN NOT NULL CHECK (fully_watched IN (0, 1)),
+    episode_number INTEGER NOT NULL,
     sentiment INTEGER NOT NULL CHECK (sentiment IN (-1, 0, 1)) DEFAULT 0,
     processed_status TEXT CHECK(processed_status IN ('PENDING', 'PROCESSED', 'FAILED')) DEFAULT 'PENDING',
+    watched_at DATETIME NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -86,4 +82,4 @@ CREATE TABLE IF NOT EXISTS ingest_staging_history (
 -- --------------------------------------------------------------------
 CREATE INDEX IF NOT EXISTS idx_tv_catalog_lookup ON tv_catalog(cache_key);
 CREATE INDEX IF NOT EXISTS idx_tv_progress_user ON tv_watch_progress(user_id);
-CREATE INDEX IF NOT EXISTS idx_tv_ingest_status ON ingest_staging_history(processed_status);
+CREATE INDEX IF NOT EXISTS idx_tv_ingest_status ON tv_ingest_staging_history(processed_status);
