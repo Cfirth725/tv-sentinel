@@ -69,7 +69,7 @@ This repository serves as an integral component of **The Sentinel Suite**—a tr
 2. **Implicit Engagement Tracking:** Eliminates explicit user rating matrices. Taste anchors and enjoyment metrics are calculated programmatically through completion depth (**Engagement Score** $\ge$ 80%).
 3. **Decoupled Data Infrastructure:** Configuration parameters point to a central, un-tracked SQLite file using Write-Ahead Logging (`WAL` mode) to allow multi-process concurrency across the suite.
 4. **Structured DevOps Telemetry:** Built with consistent, scannable log tokens (`[INIT]`, `[SECURE]`, `[IDLE]`, `[REALTIME]`, `[SERVER]`, `[OK]`, `[ERROR]`, `[SHUTDOWN]`) for clean, production-grade terminal visibility.
-5. **Graceful Pipeline Teardown:** Listens explicitly for OS lifecycle interrupts (`SIGINT`, `SIGTERM`). On capture, the API gateway locks down instantly and SQLite connection pools execute a full final checkpoint—collapsing active `-wal` and `-shm` disk fragments back down into a single consolidated database file.
+5. **Graceful Pipeline Teardown:** Listens explicitly for OS lifecycle interrupts (`SIGINT`, `SIGTERM`). On capture, the API gateway locks down instantly, background workers fully drain existing channels, and SQLite connection pools execute an exclusive final checkpoint—collapsing active disk fragments cleanly.
 
 ---
 
@@ -85,23 +85,23 @@ This repository serves as an integral component of **The Sentinel Suite**—a tr
 ```
 tv-sentinel/
 ├── cmd/
-│   └── server/
-│       └── main.go       # HTTP Router, telemetry initialization, & application entry point
+│ └── server/
+│ └── main.go # HTTP Router, telemetry initialization, & application entry point
 ├── pkg/
-│   ├── database/
-│   │   ├── db.go         # SQLite connection layer, WAL handlers, and core database DAOs
-│   │   └── schema.sql    # Relational schema extension rules & staging configurations
-│   ├── ingest/
-│   │   └── engine.go     # Asynchronous worker pools, buffer queues, & HTTP gateway routines
-│   ├── metadata/
-│   │   └── client.go     # Outbound TMDB REST client featuring authenticated bearer contexts
-│   ├── models/
-│   │   ├── tmdb.go       # Upstream REST API JSON DTO payload data shapes
-│   │   └── tv.go         # Local domain core and ingestion transaction models
-│   └── parser/
-│       └── regex.go      # Cascading TV title normalizer & episodic sequence extraction engine
-├── config.json           # Local execution configurations (Port, path targets, secret auth strings)
-└── README.md             # Project roadmap & technical specification
+│ ├── database/
+│ │ ├── db.go # SQLite connection layer, WAL handlers, and core database DAOs
+│ │ └── schema.sql # Relational schema extension rules & staging configurations
+│ ├── ingest/
+│ │ └── engine.go # Asynchronous worker pools, buffer queues, & HTTP gateway routines
+│ ├── metadata/
+│ │ └── client.go # Outbound TMDB REST client featuring authenticated bearer contexts
+│ ├── models/
+│ │ ├── tmdb.go # Upstream REST API JSON DTO payload data shapes
+│ │ └── tv.go # Local domain core and ingestion transaction models
+│ └── parser/
+│ └── regex.go # Cascading TV title normalizer & episodic sequence extraction engine
+├── config.json # Local execution configurations (Port, path targets, secret auth strings)
+└── README.md # Project roadmap & technical specification
 ```
 
 ## 🗺️ Project Roadmap
@@ -116,13 +116,15 @@ tv-sentinel/
 - [x] Model core data access objects (DAOs) and wire shapes separated across cleanly mapped package structures.
 - [x] Implement outbound REST pipeline with robust 10-second thread protection timeouts and header injection profiles.
 
-### Phase 3: Ingestion Channels & Background Orchestrator Engine (In Progress)
+### Phase 3: Ingestion Channels & Background Orchestrator Engine (Completed)
 - [x] Build a high-volume, non-blocking asynchronous ingestion route utilizing a 10,000-capacity buffered channel to absorb tracking data.
 - [x] Construct a concurrent background worker routine pool (4 workers) to process ingested payloads out-of-band using method receiver patterns.
 - [x] Connect background workers to `parser.NormalizeTvEntry` for live title transformation out-of-band.
 - [x] Integrate a lock-free **Double-Check Mechanism** to dynamically eliminate cache stampedes over concurrent ingestion bursts.
-- [ ] Introduce an **OS Signal Interceptor** to safely close background processes and enforce explicit SQLite WAL log file collapse during server shutdowns.
+- [x] Introduce an **OS Signal Interceptor** to safely close background processes and enforce explicit SQLite WAL log file collapse during server shutdowns.
 
-### Phase 4: Taste Analytical Intelligence
+### Phase 4: Taste Analytical Intelligence (In Progress)
+- [x] Design relational table structures (`tv_catalog_season_counts`) to cache episodic seasonal depths.
+- [x] Establish defensive database DAO functions (`GetPendingCatchUpRadar`) to isolate unwatched episodes while excluding dropped series.
 - [ ] Code the television-specific taste profile engine and calculate completion metrics based on the 80% engagement rule.
-- [ ] Expose an analytical intelligence endpoint (`GET /api/v1/analytics/taste`) to resolve user preference anchors.
+- [ ] Expose an analytical intelligence endpoint (`GET /api/v1/analytics/taste`) to resolve user preference anchors and the Catch-Up Radar.
