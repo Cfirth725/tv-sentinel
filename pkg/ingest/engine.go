@@ -208,6 +208,23 @@ func (e *IngestionEngine) processPayload(workerID int, payload models.TvIngestPa
 			return
 		}
 		localTvID = insertedID
+
+		// Cache structural episodic depths for each season returned by TMDB
+		for _, s := range details.Seasons {
+			// Skip special features/Season 0 tracking
+			if s.SeasonNumber < 1 {
+				continue
+			}
+			err := database.InsertTvSeasonCount(e.db, localTvID, s.SeasonNumber, s.EpisodeCount)
+			if err != nil {
+				slog.Error("[ERROR] Failed to populate localized season episodic cache",
+					"subsystem", "engine",
+					"tv_id", localTvID,
+					"season_number", s.SeasonNumber,
+					"error", err.Error(),
+				)
+			}
+		}
 	}
 
 updateProgress:

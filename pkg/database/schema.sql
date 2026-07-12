@@ -1,9 +1,9 @@
 -- ====================================================================
--- THE SENTINEL SUITE: UNIFIED TV EXTENSION SCHEMA (V1 - STANDARDIZED)
+-- THE SENTINEL SUITE: UNIFIED TV EXTENSION SCHEMA (V2 - STANDARDIZED)
 -- ====================================================================
 
 -- --------------------------------------------------------------------
--- 1. Local User Identities (Shared Suite Anchor)
+--         -- LOCAL USER IDENTITIES (SHARED SUITE ANCHOR) --
 -- Included here via IF NOT EXISTS to guarantee cross-repo consistency.
 -- Stores system account profiles responsible for active media tracking.
 -- --------------------------------------------------------------------
@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 -- --------------------------------------------------------------------
--- 2. Normalized TV Catalog (Autonomous Cache Layer)
+--        -- NORMALIZED TV CATALOG (AUTONOMOUS CACHE LAYER) --
 -- Acts as a read-through localized lookup layer to shield TMDB API quotas.
 -- Flexible string definitions accommodate crowdsourced upstream metadata variations.
 -- --------------------------------------------------------------------
@@ -30,7 +30,20 @@ CREATE TABLE IF NOT EXISTS tv_catalog (
 );
 
 -- --------------------------------------------------------------------
--- 3. Catalog Metadata Weights for Automated Taste Profiles
+--    -- CATALOG SEASON STRUCTURAL DEPTHS (EPISODIC CACHE LAYER) --
+-- Maps the expected total episode counts per season to facilitate local
+-- progress delta logic without continuous upstream network round-trips.
+-- --------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS tv_catalog_season_counts (
+    tv_id INTEGER,
+    season_number INTEGER NOT NULL,
+    total_episodes_count INTEGER NOT NULL,
+    PRIMARY KEY (tv_id, season_number),
+    FOREIGN KEY(tv_id) REFERENCES tv_catalog(id) ON DELETE CASCADE
+);
+
+-- --------------------------------------------------------------------
+--    -- CATALOG METADATA WEIGHTS FOR AUTOMATED TASTE PROFILES --
 -- Maps relational genre classifiers directly to physical TV catalog items.
 -- Cascade deletions ensure that orphaned tags drop cleanly if a title is removed.
 -- --------------------------------------------------------------------
@@ -42,7 +55,7 @@ CREATE TABLE IF NOT EXISTS tv_catalog_tags (
 );
 
 -- --------------------------------------------------------------------
--- 4. Isolated TV Progress Ledgers
+--              -- ISOLATED TV PROGRESS LEDGERS --
 -- Evaluates real-time seasonal and episodic tracking checkpoints alongside
 -- active affinity sentiment flags bound to individual unique user profiles.
 -- --------------------------------------------------------------------
@@ -59,7 +72,7 @@ CREATE TABLE IF NOT EXISTS tv_watch_progress (
 );
 
 -- --------------------------------------------------------------------
--- 5. High-Volume Ingestion Staging Table (Isolated TV Sink)
+--    -- HIGH-VOLUME INGESTION STAGING TABLE (ISOLATED TV SINK) --
 -- Provides a dedicated staging sandbox to prevent cross-service lock contention.
 -- Relaxes upstream relational constraints to maximize non-blocking input rates.
 -- --------------------------------------------------------------------
@@ -76,7 +89,7 @@ CREATE TABLE IF NOT EXISTS tv_ingest_staging_history (
 );
 
 -- --------------------------------------------------------------------
--- 6. High-Performance Query Optimizations
+--             -- HIGH-PERFORMANCE QUERY OPTIMIZATIONS --
 -- Explicitly constructed indexes to accelerate fast key scans, user profile updates,
 -- and background processing engine task queries.
 -- --------------------------------------------------------------------

@@ -47,3 +47,14 @@ type User struct {
 	Username  string    `json:"username"`
 	CreatedAt time.Time `json:"created_at"`
 }
+
+// TvCatchUpDelta represents a television series where upstream catalog availability
+// outpaces the user's current localized watch state tracking records.
+type TvCatchUpDelta struct {
+	TvID              int64     `json:"tv_id"`
+	TitleDisplay      string    `json:"title_display"`
+	CurrentSeason     int       `json:"current_season"`
+	CurrentEpisode    int       `json:"current_episode"`
+	TotalSeasonsCount int       `json:"total_seasons_count"`
+	LastWatchedAt     time.Time `json:"last_watched_at"`
+}

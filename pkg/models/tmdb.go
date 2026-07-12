@@ -21,11 +21,19 @@ type TmdbSearchEnvelope struct {
 
 // TmdbSeriesDetails handles the targeted response payload when looking up an exact series ID.
 type TmdbSeriesDetails struct {
-	ID               int64  `json:"id"`
-	Name             string `json:"name"`
-	Status           string `json:"status"` // E.g., 'Returning Series', 'Ended', 'Canceled'
-	Type             string `json:"type"`   // E.g., 'Scripted', 'Reality', 'Miniseries'
-	NumberOfEpisodes int    `json:"number_of_episodes"`
-	NumberOfSeasons  int    `json:"number_of_seasons"`
-	Overview         string `json:"overview"`
+	ID               int64           `json:"id"`
+	Name             string          `json:"name"`
+	Status           string          `json:"status"` // E.g., 'Returning Series', 'Ended', 'Canceled'
+	Type             string          `json:"type"`   // E.g., 'Scripted', 'Reality', 'Miniseries'
+	NumberOfEpisodes int             `json:"number_of_episodes"`
+	NumberOfSeasons  int             `json:"number_of_seasons"`
+	Overview         string          `json:"overview"`
+	Seasons          []TmdbSeasonRow `json:"seasons"`
+}
+
+// TmdbSeasonRow handles the nested structural metadata for individual seasons
+// within a detailed series response envelope.
+type TmdbSeasonRow struct {
+	SeasonNumber int `json:"season_number"`
+	EpisodeCount int `json:"episode_count"`
 }

@@ -14,6 +14,10 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
+// ====================================================================
+//         -- SUBSYSTEM CONFIGURATION & BOOTSTRAPPING ENGINE --
+// ====================================================================
+
 // Config holds the environment configuration parameters parsed from disk.
 type Config struct {
 	Port         string `json:"PORT"`
@@ -97,6 +101,10 @@ func InitDatabase(dbPath string, schemaPath string) (*sql.DB, error) {
 	)
 	return db, nil
 }
+
+// ====================================================================
+//                -- DATA ACCESS OBJECTS (DAO LAYER) --
+// ====================================================================
 
 // GetUserByUsername checks the shared database identity table for an active account profile.
 // It returns a nil model pointer if the user account record does not exist.
@@ -189,6 +197,18 @@ func InsertTvCatalog(db *sql.DB, extID, cacheKey, title, status, tvType string, 
 	return insertedID, nil
 }
 
+// InsertTvSeasonCount stores or updates the episodic structural depths for a given season.
+func InsertTvSeasonCount(db *sql.DB, tvID int64, seasonNum int, episodeCount int) error {
+	query := `
+		INSERT INTO tv_catalog_season_counts (tv_id, season_number, total_episodes_count)
+		VALUES (?, ?, ?)
+		ON CONFLICT(tv_id, season_number) DO UPDATE SET
+			total_episodes_count = excluded.total_episodes_count;`
+
+	_, err := db.Exec(query, tvID, seasonNum, episodeCount)
+	return err
+}
+
 // UpsertTvWatchProgress commits a progressive seasonal and episodic watch marker milestone checkpoint.
 // If an entry for the user and show already exists, it upserts the progress sequentially.
 func UpsertTvWatchProgress(db *sql.DB, userID, tvID int64, season, episode, sentiment int) error {
@@ -213,4 +233,54 @@ func UpsertTvWatchProgress(db *sql.DB, userID, tvID int64, season, episode, sent
 	}
 
 	return nil
+}
+
+// GetPendingCatchUpRadar returns a collection of series where new seasons or episodes
+// are available upstream, completely omitting tracks flagged as unsatisfactory.
+func GetPendingCatchUpRadar(db *sql.DB, userID int64) ([]models.TvCatchUpDelta, error) {
+	query := `
+		SELECT 
+			c.id, 
+			c.title_display, 
+			p.current_season, 
+			p.current_episode,
+			c.total_seasons_count,
+			p.last_watched_at
+		FROM tv_watch_progress p
+		JOIN tv_catalog c ON p.tv_id = c.id
+		LEFT JOIN tv_catalog_season_counts s 
+		  ON p.tv_id = s.tv_id AND p.current_season = s.season_number
+		WHERE p.user_id = ? 
+		  AND p.sentiment >= 0 
+		  AND (
+		      p.current_season < c.total_seasons_count
+		      OR 
+		      (p.current_season = c.total_seasons_count AND p.current_episode < s.total_episodes_count)
+		  )
+		ORDER BY p.last_watched_at DESC;`
+
+	rows, err := db.Query(query, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute catch-up radar database lookup: %w", err)
+	}
+	defer rows.Close()
+
+	var deltas []models.TvCatchUpDelta
+	for rows.Next() {
+		var d models.TvCatchUpDelta
+		err := rows.Scan(
+			&d.TvID,
+			&d.TitleDisplay,
+			&d.CurrentSeason,
+			&d.CurrentEpisode,
+			&d.TotalSeasonsCount,
+			&d.LastWatchedAt,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan catch-up radar row descriptor: %w", err)
+		}
+		deltas = append(deltas, d)
+	}
+
+	return deltas, nil
 }
