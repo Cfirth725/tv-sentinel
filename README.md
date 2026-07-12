@@ -82,7 +82,7 @@ This repository serves as an integral component of **The Sentinel Suite**—a tr
 ---
 
 ## 📂 System Topology
-```text
+```
 tv-sentinel/
 ├── cmd/
 │   └── server/
@@ -91,6 +91,8 @@ tv-sentinel/
 │   ├── database/
 │   │   ├── db.go         # SQLite connection layer, WAL handlers, and core database DAOs
 │   │   └── schema.sql    # Relational schema extension rules & staging configurations
+│   ├── ingest/
+│   │   └── engine.go     # Asynchronous worker pools, buffer queues, & HTTP gateway routines
 │   ├── metadata/
 │   │   └── client.go     # Outbound TMDB REST client featuring authenticated bearer contexts
 │   ├── models/
@@ -114,11 +116,11 @@ tv-sentinel/
 - [x] Model core data access objects (DAOs) and wire shapes separated across cleanly mapped package structures.
 - [x] Implement outbound REST pipeline with robust 10-second thread protection timeouts and header injection profiles.
 
-### Phase 3: Ingestion Channels & Background Orchestrator Engine (Up Next)
-- [ ] Build a high-volume, non-blocking asynchronous ingestion route utilizing a 10,000-capacity buffered channel to absorb tracking data.
-- [ ] Construct a concurrent background worker routine pool (4 workers) to process ingested payloads out-of-band using method receiver patterns.
-- [ ] Connect background workers to `parser.NormalizeTvEntry` for live title transformation out-of-band.
-- [ ] Integrate a lock-free **Double-Check Mechanism** to dynamically eliminate cache stampedes over concurrent ingestion bursts.
+### Phase 3: Ingestion Channels & Background Orchestrator Engine (In Progress)
+- [x] Build a high-volume, non-blocking asynchronous ingestion route utilizing a 10,000-capacity buffered channel to absorb tracking data.
+- [x] Construct a concurrent background worker routine pool (4 workers) to process ingested payloads out-of-band using method receiver patterns.
+- [x] Connect background workers to `parser.NormalizeTvEntry` for live title transformation out-of-band.
+- [x] Integrate a lock-free **Double-Check Mechanism** to dynamically eliminate cache stampedes over concurrent ingestion bursts.
 - [ ] Introduce an **OS Signal Interceptor** to safely close background processes and enforce explicit SQLite WAL log file collapse during server shutdowns.
 
 ### Phase 4: Taste Analytical Intelligence
