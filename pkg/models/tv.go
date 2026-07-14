@@ -58,3 +58,29 @@ type TvCatchUpDelta struct {
 	TotalSeasonsCount int       `json:"total_seasons_count"`
 	LastWatchedAt     time.Time `json:"last_watched_at"`
 }
+
+// ====================================================================
+//          -- PROGRAMMATIC TASTE PROFILE ANALYTICS MODELS --
+// ====================================================================
+
+// ShowCompletion represents the computed tracking depth and engagement
+// metrics for a single television series.
+type ShowCompletion struct {
+	TvID             int64   `json:"tv_id"`
+	TitleDisplay     string  `json:"title_display"`
+	EpisodesWatched  int     `json:"episodes_watched"`
+	TotalEpisodes    int     `json:"total_episodes"`
+	EngagementScore  float64 `json:"engagement_score"`   // Percentage: (Watched / Total) * 100
+	IsAnchorInterest bool    `json:"is_anchor_interest"` // True if EngagementScore >= 80%
+}
+
+// TasteProfile aggregates calculated user metrics, preferred genre anchors,
+// and the current catch-up delta queue.
+type TasteProfile struct {
+	UserID          int64            `json:"user_id"`
+	Username        string           `json:"username"`
+	AnchorGenres    []string         `json:"anchor_genres"` // Aggregated from tags of shows >= 80% engagement
+	CatchUpRadar    []TvCatchUpDelta `json:"catch_up_radar"`
+	CompletionStats []ShowCompletion `json:"completion_stats"`
+	GeneratedAt     time.Time        `json:"generated_at"`
+}
