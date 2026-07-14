@@ -20,11 +20,11 @@ This repository serves as an integral component of **The Sentinel Suite**—a tr
 └───────┬────────┘ └──────┬────────┘ └───────┬────────┘
         │                 │                  │
    └────────────────────┐ │ ┌──────────────────────┘
-					    ▼ ▼ ▼
-		┌───────────────────────────────────┐
-		│      shared-sentinel-data/        │
-		│        sentinel_suite.db          │
-		└───────────────────────────────────┘
+			      ▼ ▼ ▼
+	   ┌───────────────────────────────────┐
+	   │      shared-sentinel-data/        │
+	   │        sentinel_suite.db          │
+	   └───────────────────────────────────┘
 ```
 
 ## Concurrent Background Processing Flow & Stampede Mitigation
@@ -93,11 +93,14 @@ tv-sentinel/
 │ │ └── schema.sql # Relational schema extension rules & staging configurations
 │ ├── ingest/
 │ │ └── engine.go # Asynchronous worker pools, buffer queues, & HTTP gateway routines
+│ ├── intelligence/
+│ │ ├── engine.go # Out-of-band taste profiles & watch progress completion metrics
+│ │ └── handlers.go # HTTP endpoints serving computed analytical profile contexts
 │ ├── metadata/
 │ │ └── client.go # Outbound TMDB REST client featuring authenticated bearer contexts
 │ ├── models/
 │ │ ├── tmdb.go # Upstream REST API JSON DTO payload data shapes
-│ │ └── tv.go # Local domain core and ingestion transaction models
+│ │ └── tv.go # Local domain core, analytical, and ingestion transaction models
 │ └── parser/
 │ └── regex.go # Cascading TV title normalizer & episodic sequence extraction engine
 ├── config.json # Local execution configurations (Port, path targets, secret auth strings)
@@ -123,8 +126,12 @@ tv-sentinel/
 - [x] Integrate a lock-free **Double-Check Mechanism** to dynamically eliminate cache stampedes over concurrent ingestion bursts.
 - [x] Introduce an **OS Signal Interceptor** to safely close background processes and enforce explicit SQLite WAL log file collapse during server shutdowns.
 
-### Phase 4: Taste Analytical Intelligence (In Progress)
+### Phase 4: Taste Analytical Intelligence (Completed)
 - [x] Design relational table structures (`tv_catalog_season_counts`) to cache episodic seasonal depths.
 - [x] Establish defensive database DAO functions (`GetPendingCatchUpRadar`) to isolate unwatched episodes while excluding dropped series.
-- [ ] Code the television-specific taste profile engine and calculate completion metrics based on the 80% engagement rule.
-- [ ] Expose an analytical intelligence endpoint (`GET /api/v1/analytics/taste`) to resolve user preference anchors and the Catch-Up Radar.
+- [x] Code the television-specific taste profile engine and calculate completion metrics based on the 80% engagement rule.
+- [x] Expose an analytical intelligence endpoint (`GET /api/v1/analytics/taste`) to resolve user preference anchors and the Catch-Up Radar.
+
+### Phase 5: Containerization & Code Standardization (In Progress)
+- [ ] Refactor legacy files to conform to the standardized repository code guide.
+- [ ] Author a multi-stage, scratch-based `Dockerfile` optimized for local home lab deployment.
