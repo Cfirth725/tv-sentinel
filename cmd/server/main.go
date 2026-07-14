@@ -17,6 +17,10 @@ import (
 )
 
 func main() {
+	// ====================================================================
+	//         -- SERVICE INITIALIZATION & CONFIGURATION BOOTSTRAP --
+	// ====================================================================
+
 	// Set up structured text logging to standard output
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
 	slog.SetDefault(logger)
@@ -26,7 +30,7 @@ func main() {
 		"event", "boot_initiated",
 	)
 
-	// 1. Load system configuration properties
+	// Load system configuration properties
 	config, err := database.LoadConfig("config.json")
 	if err != nil {
 		slog.Error("[ERROR] Critical bootstrapping failure: unable to parse configuration parameters",
@@ -36,7 +40,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	// 2. Initialize the SQLite database connection with WAL mode enabled
+	// Initialize the SQLite database connection with WAL mode enabled
 	db, err := database.InitDatabase(config.DatabasePath, "pkg/database/schema.sql")
 	if err != nil {
 		slog.Error("[ERROR] Critical storage instantiation failure: pipeline blocked",
@@ -46,17 +50,20 @@ func main() {
 		os.Exit(1)
 	}
 
-	// 3. Set up the TMDB metadata API client
+	// Set up the TMDB metadata API client
 	tmdbClient := metadata.NewTmdbClient(config.TmdbToken)
 
-	// 4. Initialize and start the asynchronous ingestion worker pool (4 parallel goroutines)
+	// Initialize and start the asynchronous ingestion worker pool (4 parallel goroutines)
 	engine := ingest.NewIngestionEngine(db, tmdbClient, 4)
 	engine.StartWorkerPool()
 
-	// 5. Initialize the intelligence and analytical calculations engine
+	// Initialize the intelligence and analytical calculations engine
 	intelEngine := intelligence.NewIntelligenceEngine(db)
 
-	// 6. Set up the HTTP router and register handlers
+	// ====================================================================
+	//                -- HTTP ROUTING & PIPELINE MULTIPLEXER --
+	// ====================================================================
+
 	mux := http.NewServeMux()
 
 	// Main async tracking ingestion route
@@ -70,6 +77,10 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprintln(w, "💚 TV Sentinel System Health: OPERATIONAL")
 	})
+
+	// ====================================================================
+	//                -- RUNTIME SERVER CORE & OS SIGNAL LISTENERS --
+	// ====================================================================
 
 	// Format the listening port string correctly
 	addr := ":" + config.Port
@@ -107,7 +118,9 @@ func main() {
 	sig := <-shutdownSignal
 	slog.Warn("[SHUTDOWN] Shutdown signal received! Initiating graceful pipeline teardown...", "signal", sig.String())
 
-	// Execute the graceful shutdown sequence in reverse order of initialization:
+	// ====================================================================
+	//               -- GRACEFUL PIPELINE TEARDOWN SEQUENCE --
+	// ====================================================================
 
 	// 1. Stop accepting new HTTP connections and drain in-flight requests
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)

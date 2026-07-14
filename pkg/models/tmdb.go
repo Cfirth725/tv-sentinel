@@ -2,6 +2,10 @@
 // API request/response frames, and database transfer objects used throughout the system.
 package models
 
+// ====================================================================
+//             -- UPSTREAM TMDB SEARCH DATA SHAPES --
+// ====================================================================
+
 // TmdbSearchRow handles an individual structural show result from a general search array.
 type TmdbSearchRow struct {
 	ID            int64    `json:"id"`
@@ -18,6 +22,10 @@ type TmdbSearchEnvelope struct {
 	TotalPages   int             `json:"total_pages"`
 	TotalResults int             `json:"total_results"`
 }
+
+// ====================================================================
+//             -- UPSTREAM TMDB DETAIL DATA SHAPES --
+// ====================================================================
 
 // TmdbSeriesDetails handles the targeted response payload when looking up an exact series ID.
 type TmdbSeriesDetails struct {

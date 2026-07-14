@@ -19,6 +19,10 @@ import (
 	"github.com/Cfirth725/tv-sentinel/pkg/parser"
 )
 
+// ====================================================================
+//                -- ENGINE STRUCT & INITIALIZATION --
+// ====================================================================
+
 // IngestionEngine manages the thread-safe async buffer queue and orchestrates
 // background database workers, decoupling the API from the storage layer.
 type IngestionEngine struct {
@@ -71,6 +75,10 @@ func (e *IngestionEngine) Stop() {
 		"subsystem", "engine",
 	)
 }
+
+// ====================================================================
+//             -- BACKGROUND ASYNC ROUTINE WORKER POOLS --
+// ====================================================================
 
 // worker represents an autonomous background consumer method that continuously drains the central channel.
 // It incorporates a lock-free double-check read-through cache layer to shield upstream API resources.
@@ -211,7 +219,6 @@ func (e *IngestionEngine) processPayload(workerID int, payload models.TvIngestPa
 
 		// Cache structural episodic depths for each season returned by TMDB
 		for _, s := range details.Seasons {
-			// Skip special features/Season 0 tracking
 			if s.SeasonNumber < 1 {
 				continue
 			}
@@ -242,6 +249,10 @@ updateProgress:
 		"episode", normalized.EpisodeNumber,
 	)
 }
+
+// ====================================================================
+//                -- HTTP PUBLIC ENTRYWAYS & GATES --
+// ====================================================================
 
 // HandleIngest serves as the high-performance HTTP gateway loop. It decodes body structures,
 // executes baseline validation filters, and immediately offloads elements to the queue.

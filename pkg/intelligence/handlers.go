@@ -9,6 +9,10 @@ import (
 	"strconv"
 )
 
+// ====================================================================
+//                -- HTTP PUBLIC ANALYTICS ENTRYPOINTS --
+// ====================================================================
+
 // HandleGetTasteProfile compiles and returns the complete programmatic taste profile metrics,
 // including anchor genres, historical stats, and the active Catch-Up Radar.
 func (ie *IntelligenceEngine) HandleGetTasteProfile(w http.ResponseWriter, r *http.Request) {

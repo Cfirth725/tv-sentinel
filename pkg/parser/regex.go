@@ -15,6 +15,10 @@ type NormalizedTvMedia struct {
 	EpisodeNumber int
 }
 
+// ====================================================================
+//             -- COMPILED SEQUENCE MATCH PATTERNS (REGEX) --
+// ====================================================================
+
 var (
 	// sxxExxRegex matches S01E04 preceded by spaces, dots, underscores, or dashes.
 	sxxExxRegex = regexp.MustCompile(`(?i)[\s._-]+S(\d{1,2})E(\d{1,3})`)
@@ -28,6 +32,10 @@ var (
 	// junkRegex mandates strict word boundaries (\b) so it won't clip letters inside real words.
 	junkRegex = regexp.MustCompile(`(?i)\b(?:\d{3,4}p|bluray|hdtv|x26[45]|web-dl|amzn|nf)\b.*`)
 )
+
+// ====================================================================
+//             -- PUBLIC TEXTUAL NORMALIZATION LOGIC --
+// ====================================================================
 
 // NormalizeTvEntry parses a raw incoming media title string into structured seasonal metrics.
 func NormalizeTvEntry(rawTitle string) NormalizedTvMedia {

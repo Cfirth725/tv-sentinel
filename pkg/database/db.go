@@ -49,7 +49,7 @@ func InitDatabase(dbPath string, schemaPath string) (*sql.DB, error) {
 		"target_path", dbPath,
 	)
 
-	// Open the SQLite file pointer with optimization flags tuned for local labs
+	// Open SQLite with performance-tuned defaults for local systems
 	db, err := sql.Open("sqlite3", dbPath+"?_journal_mode=WAL&_sync=NORMAL&_foreign_keys=on")
 	if err != nil {
 		slog.Error("[ERROR] Failed to establish physical database transport layer pointer",
@@ -59,7 +59,7 @@ func InitDatabase(dbPath string, schemaPath string) (*sql.DB, error) {
 		return nil, fmt.Errorf("failed to open persistent database instance: %w", err)
 	}
 
-	// Verify the connection pool handle is active before running queries
+	// Verify database connection is alive before launching
 	if err := db.Ping(); err != nil {
 		slog.Error("[ERROR] Persistent connection verification ping failed",
 			"subsystem", "database",
@@ -74,7 +74,7 @@ func InitDatabase(dbPath string, schemaPath string) (*sql.DB, error) {
 		"schema_path", schemaPath,
 	)
 
-	// Read and parse the local schema extension file lines
+	// Read local schema file rules
 	schemaBytes, err := os.ReadFile(schemaPath)
 	if err != nil {
 		slog.Error("[ERROR] Failed to read schema file map from persistent disk storage",
@@ -86,7 +86,7 @@ func InitDatabase(dbPath string, schemaPath string) (*sql.DB, error) {
 		return nil, fmt.Errorf("failed to load schema execution instructions from target file: %w", err)
 	}
 
-	// Append tables safely using structural 'IF NOT EXISTS' gates
+	// Execute schema migration
 	if _, err := db.Exec(string(schemaBytes)); err != nil {
 		slog.Error("[ERROR] Failed to execute relational schema synchronization scripts",
 			"subsystem", "database",

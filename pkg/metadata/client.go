@@ -14,6 +14,10 @@ import (
 
 const tmdbBaseURL = "https://api.themoviedb.org/3"
 
+// ====================================================================
+//                -- CLIENT CONFIGURATION & INTAKE --
+// ====================================================================
+
 // TmdbClient encapsulates network transport configurations and access keys for TMDB.
 type TmdbClient struct {
 	httpClient *http.Client
@@ -29,6 +33,10 @@ func NewTmdbClient(token string) *TmdbClient {
 		bearerAuth: "Bearer " + token,
 	}
 }
+
+// ====================================================================
+//             -- OUTBOUND EXTERNAL API SYNCHRONIZERS --
+// ====================================================================
 
 // SearchTvSeries queries TMDB for candidate shows matching a raw title string.
 func (c *TmdbClient) SearchTvSeries(query string) (*models.TmdbSearchEnvelope, error) {

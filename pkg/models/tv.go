@@ -4,6 +4,17 @@ package models
 
 import "time"
 
+// ====================================================================
+//             -- CORE SUITE IDENTITY & DATABASE MODELS --
+// ====================================================================
+
+// User captures the unified system identity profile mapping shared across the suite.
+type User struct {
+	ID        int64     `json:"id"`
+	Username  string    `json:"username"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
 // TvCatalog captures the specific metadata fields mapped from the external TMDB registry.
 type TvCatalog struct {
 	ID                int64     `json:"id"`
@@ -26,6 +37,10 @@ type TvWatchProgress struct {
 	Sentiment      int       `json:"sentiment"`
 }
 
+// ====================================================================
+//                 -- INGESTION CHANNEL PAYLOADS --
+// ====================================================================
+
 // TvIngestPayload represents an incoming raw tracking record forwarded from the ingestion streams.
 type TvIngestPayload struct {
 	Username      string    `json:"username"`
@@ -41,12 +56,9 @@ type TvImportEnvelope struct {
 	Shows []TvIngestPayload `json:"shows"`
 }
 
-// User captures the unified system identity profile mapping shared across the suite.
-type User struct {
-	ID        int64     `json:"id"`
-	Username  string    `json:"username"`
-	CreatedAt time.Time `json:"created_at"`
-}
+// ====================================================================
+//             -- PROGRAMMATIC TASTE PROFILE ANALYTICS --
+// ====================================================================
 
 // TvCatchUpDelta represents a television series where upstream catalog availability
 // outpaces the user's current localized watch state tracking records.
@@ -58,10 +70,6 @@ type TvCatchUpDelta struct {
 	TotalSeasonsCount int       `json:"total_seasons_count"`
 	LastWatchedAt     time.Time `json:"last_watched_at"`
 }
-
-// ====================================================================
-//          -- PROGRAMMATIC TASTE PROFILE ANALYTICS MODELS --
-// ====================================================================
 
 // ShowCompletion represents the computed tracking depth and engagement
 // metrics for a single television series.

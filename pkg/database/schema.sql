@@ -3,7 +3,7 @@
 -- ====================================================================
 
 -- --------------------------------------------------------------------
---         -- LOCAL USER IDENTITIES (SHARED SUITE ANCHOR) --
+--          -- LOCAL USER IDENTITIES (SHARED SUITE ANCHOR) --
 -- Included here via IF NOT EXISTS to guarantee cross-repo consistency.
 -- Stores system account profiles responsible for active media tracking.
 -- --------------------------------------------------------------------
@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 -- --------------------------------------------------------------------
---        -- NORMALIZED TV CATALOG (AUTONOMOUS CACHE LAYER) --
+--         -- NORMALIZED TV CATALOG (AUTONOMOUS CACHE LAYER) --
 -- Acts as a read-through localized lookup layer to shield TMDB API quotas.
 -- Flexible string definitions accommodate crowdsourced upstream metadata variations.
 -- --------------------------------------------------------------------
@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS tv_catalog_tags (
 );
 
 -- --------------------------------------------------------------------
---              -- ISOLATED TV PROGRESS LEDGERS --
+--               -- ISOLATED TV PROGRESS LEDGERS --
 -- Evaluates real-time seasonal and episodic tracking checkpoints alongside
 -- active affinity sentiment flags bound to individual unique user profiles.
 -- --------------------------------------------------------------------
@@ -89,7 +89,7 @@ CREATE TABLE IF NOT EXISTS tv_ingest_staging_history (
 );
 
 -- --------------------------------------------------------------------
---             -- HIGH-PERFORMANCE QUERY OPTIMIZATIONS --
+--              -- HIGH-PERFORMANCE QUERY OPTIMIZATIONS --
 -- Explicitly constructed indexes to accelerate fast key scans, user profile updates,
 -- and background processing engine task queries.
 -- --------------------------------------------------------------------

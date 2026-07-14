@@ -20,11 +20,11 @@ This repository serves as an integral component of **The Sentinel Suite**—a tr
 └───────┬────────┘ └──────┬────────┘ └───────┬────────┘
         │                 │                  │
    └────────────────────┐ │ ┌──────────────────────┘
-			      ▼ ▼ ▼
-	   ┌───────────────────────────────────┐
-	   │      shared-sentinel-data/        │
-	   │        sentinel_suite.db          │
-	   └───────────────────────────────────┘
+					    ▼ ▼ ▼
+		┌───────────────────────────────────┐
+		│      shared-sentinel-data/        │
+		│        sentinel_suite.db          │
+		└───────────────────────────────────┘
 ```
 
 ## Concurrent Background Processing Flow & Stampede Mitigation
@@ -133,5 +133,5 @@ tv-sentinel/
 - [x] Expose an analytical intelligence endpoint (`GET /api/v1/analytics/taste`) to resolve user preference anchors and the Catch-Up Radar.
 
 ### Phase 5: Containerization & Code Standardization (In Progress)
-- [ ] Refactor legacy files to conform to the standardized repository code guide.
+- [x] Refactor legacy files to conform to the standardized repository code guide.
 - [ ] Author a multi-stage, scratch-based `Dockerfile` optimized for local home lab deployment.
